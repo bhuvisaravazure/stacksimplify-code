@@ -17,7 +17,46 @@ stages:
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: '$(System.DefaultWorkingDirectory)/terraform-manifests'
-          ArtifactName: 'terraform-manifests-out'
+          ArtifactName: 'Terraform-manifests'
           publishLocation: 'Container'
-        
+      - task: TerraformInstaller@0
+        inputs:
+          terraformVersion: 'latest'
 
+      - task: TerraformCLI@0
+        inputs:
+          command: 'init'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-manifests'
+          backendType: 'azurerm'
+          allowTelemetryCollection: false
+      - task: TerraformCLI@0
+        inputs:
+          command: 'validate'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-manifests'
+          allowTelemetryCollection: false
+      
+        
+# Stage-2: Deploy Stages for Dev & QA
+
+  - stage: 
+    jobs:
+    - job: 
+      steps:
+      - task: TerraformCLI@0
+        inputs:
+          command: 'plan'
+          workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+          allowTelemetryCollection: false
+      - task: TerraformCLI@0
+        inputs:
+          command: 'apply'
+          workingDirectory: '$(Pipeline.Workspace)/terraform-manifests-out'
+          allowTelemetryCollection: false
+      
+
+# Deployment-1: Deploy Dev AKS Cluster
+## Step-1: Define Variables for environments
+## Step-2: Download SSH Secure File
+## Step-3: Terraform Initialize (State Storage to store in Azure Storage Account for Dev AKS Cluster)
+## Step-4: Terraform Plan (Create Plan)
+## Step-5: Terraform Apply (Use the plan created in previous step)
